@@ -1,6 +1,9 @@
 package entites;
 
+import utils.Range;
+
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -10,12 +13,24 @@ public class Animal extends Entity{
     public static Entity[][] entities;
     private Point destinationPoint;
 
+    public static Range sizeRange  = new Range(1, 255);
+    public static Range speedRange  = new Range(0, 7);
+    public static Range sensRange  = new Range(0, 10);
+
+    private int size;
+    private int speed;
+    private int sens;
+
     public static void setEntities(Entity[][] entities) {
         Animal.entities = entities;
     }
 
-    public Animal(Point point, Image image) {
-        super(EntityType.ANIMAL, point, image);
+    public Animal(Point flowPoint, int size, int speed, int sens) {
+        super(EntityType.ANIMAL, flowPoint);
+        this.size = size;
+        this.speed = speed;
+        this.sens = sens;
+        setImage(generateImage(size, speed, sens));
         destinationPoint = (Point) flowPoint.clone();
     }
 
@@ -53,5 +68,21 @@ public class Animal extends Entity{
         if(tmp.y != 0)
             availablePoints.add(new Point(flowPoint.x, flowPoint.y + (tmp.y / Math.abs(tmp.y))));
         return availablePoints.stream().filter(p -> entities[p.y][p.x] == null).findAny().orElse(null);
+    }
+
+    static Image generateImage(int size, int speed, int sens){
+        Range rgbRange = new Range(0, 255);
+        Color color = new Color(
+                sizeRange.transformToRange(rgbRange, size),
+                speedRange.transformToRange(rgbRange, speed),
+                sensRange.transformToRange(rgbRange, sens));
+        BufferedImage image = new BufferedImage(16, 16, BufferedImage.TYPE_3BYTE_BGR);
+        Random random = new Random();
+        for(int i = 0; i < image.getHeight(); ++i){
+            for(int j = 0; j < image.getWidth(); ++j){
+                image.setRGB(i, j, color.getRGB());
+            }
+        }
+        return image;
     }
 }

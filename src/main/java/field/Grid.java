@@ -15,6 +15,9 @@ public class Grid {
     static Random random = new Random();
     private int flowIteration = 0;
     private Entity[][] entitiesGrid;
+    private final int plantGenPercent = 20;
+    private final int maxAmmPlantsGenOnce = 8;
+
 
     public Entity[][] getEntitiesGrid() {
         return entitiesGrid;
@@ -28,7 +31,6 @@ public class Grid {
         Entity.setBorder(border);
         Animal.setEntities(entitiesGrid);
         generateAnimals(20);
-        generatePlants(20);
     }
 
     public void generateAnimals(int amm){
@@ -36,20 +38,30 @@ public class Grid {
             int cellNum = random.nextInt(AMM_CELLS);
             int posY = cellNum / border.width;
             int posX = cellNum % border.width;
-            entitiesGrid[posY][posX] = new Animal(new Point(posX, posY), generateRandImage());
+            entitiesGrid[posY][posX] = new Animal(
+                    new Point(posX, posY),
+                    Animal.sizeRange.getRandValue(),
+                    Animal.speedRange.getRandValue(),
+                    Animal.sensRange.getRandValue());
         }
     }
 
-    public void generatePlants(int amm){
+    public void generatePlants(){
+        if(random.nextInt(100) + 1 > plantGenPercent)
+            return;
+        int amm = random.nextInt(maxAmmPlantsGenOnce) + 1;
         for(int i = 0; i < amm; ++i){
             int cellNum = random.nextInt(AMM_CELLS);
             int posY = cellNum / border.width;
             int posX = cellNum % border.width;
+            if(entitiesGrid[posY][posX] != null)
+                continue;
             entitiesGrid[posY][posX] = new Plant(new Point(posX, posY));
         }
     }
 
     public void updateEntities(){
+        generatePlants();
         for(Entity[] entities : entitiesGrid){
             for(Entity entity : entities){
                 if(entity == null)
@@ -60,14 +72,5 @@ public class Grid {
         ++flowIteration;
     }
 
-    static Image generateRandImage(){
-        BufferedImage image = new BufferedImage(16, 16, BufferedImage.TYPE_3BYTE_BGR);
-        Color color = new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256));
-        for(int i = 0; i < image.getHeight(); ++i){
-            for(int j = 0; j < image.getWidth(); ++j){
-                image.setRGB(i, j, color.getRGB());
-            }
-        }
-        return image;
-    }
+
 }

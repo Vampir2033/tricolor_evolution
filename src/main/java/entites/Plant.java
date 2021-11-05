@@ -26,7 +26,8 @@ public class Plant extends Entity{
     }
 
     public Plant(Point flowPoint) {
-        super(EntityType.PLANT, flowPoint, plantImage);
+        super(EntityType.PLANT, flowPoint);
+        setImage(plantImage);
     }
 
 }

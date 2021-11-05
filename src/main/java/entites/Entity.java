@@ -8,11 +8,13 @@ public abstract class Entity {
     public Image image;
     public static Rectangle border;
 
+    public void setImage(Image image) {
+        this.image = image;
+    }
 
-    public Entity(EntityType entityType, Point flowPoint, Image image) {
+    public Entity(EntityType entityType, Point flowPoint) {
         this.entityType = entityType;
         this.flowPoint = flowPoint;
-        this.image = image;
     }
 
     public static void setBorder(Rectangle border) {

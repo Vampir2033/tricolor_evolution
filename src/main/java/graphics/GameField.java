@@ -26,7 +26,7 @@ public class GameField extends JPanel implements ActionListener {
 
     public void initGame(){
         grid = new Grid(WIDTH/DOT_SIZE - 1, HEIGHT/DOT_SIZE - 1);
-        timer = new Timer(250, this);
+        timer = new Timer(32, this);
         timer.start();
     }
 
