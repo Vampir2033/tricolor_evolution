@@ -3,6 +3,7 @@ package field;
 import entites.Animal;
 import entites.Entity;
 import entites.EntityType;
+import entites.Plant;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -27,6 +28,7 @@ public class Grid {
         Entity.setBorder(border);
         Animal.setEntities(entitiesGrid);
         generateAnimals(20);
+        generatePlants(20);
     }
 
     public void generateAnimals(int amm){
@@ -35,6 +37,15 @@ public class Grid {
             int posY = cellNum / border.width;
             int posX = cellNum % border.width;
             entitiesGrid[posY][posX] = new Animal(new Point(posX, posY), generateRandImage());
+        }
+    }
+
+    public void generatePlants(int amm){
+        for(int i = 0; i < amm; ++i){
+            int cellNum = random.nextInt(AMM_CELLS);
+            int posY = cellNum / border.width;
+            int posX = cellNum % border.width;
+            entitiesGrid[posY][posX] = new Plant(new Point(posX, posY));
         }
     }
 

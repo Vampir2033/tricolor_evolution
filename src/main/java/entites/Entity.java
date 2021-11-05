@@ -19,5 +19,7 @@ public abstract class Entity {
         Entity.border = border;
     }
 
-    public abstract void update(int iteration);
+    public void update(int iteration){
+
+    }
 }
