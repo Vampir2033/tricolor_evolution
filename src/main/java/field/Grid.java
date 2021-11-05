@@ -2,45 +2,51 @@ package field;
 
 import entites.Animal;
 import entites.Entity;
+import entites.EntityType;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class Grid {
-    private final int sizeX;
-    private final int sizeY;
+    private final Rectangle border;
     private final int AMM_CELLS;
     static Random random = new Random();
-    List<Entity> entityList;
+    private int flowIteration = 0;
+    private Entity[][] entitiesGrid;
 
     public Entity[][] getEntitiesGrid() {
         return entitiesGrid;
     }
 
-    private Entity[][] entitiesGrid;
 
     public Grid(int sizeX, int sizeY) {
-        this.sizeX = sizeX;
-        this.sizeY = sizeY;
+        border = new Rectangle(sizeX, sizeY);
         AMM_CELLS = sizeX * sizeY;
         entitiesGrid = new Entity[sizeY][sizeX];
+        Entity.setBorder(border);
         Animal.setEntities(entitiesGrid);
-        generateAnimals(80);
+        generateAnimals(20);
     }
 
     public void generateAnimals(int amm){
-        entityList = new ArrayList<>();
         for(int i = 0; i < amm; ++i){
             int cellNum = random.nextInt(AMM_CELLS);
-            int posY = cellNum / sizeX;
-            int posX = cellNum % sizeX;
-            entitiesGrid[posY][posX] = new Animal(posX, posY, generateRandImage());
-            entityList.add(entitiesGrid[posY][posX]);
+            int posY = cellNum / border.width;
+            int posX = cellNum % border.width;
+            entitiesGrid[posY][posX] = new Animal(new Point(posX, posY), generateRandImage());
         }
-        entityList = entityList.stream().filter(entity -> entity.posX >= 18 || entity.posY >= 18).toList();
+    }
+
+    public void updateEntities(){
+        for(Entity[] entities : entitiesGrid){
+            for(Entity entity : entities){
+                if(entity == null)
+                    continue;
+                entity.update(flowIteration);
+            }
+        }
+        ++flowIteration;
     }
 
     static Image generateRandImage(){

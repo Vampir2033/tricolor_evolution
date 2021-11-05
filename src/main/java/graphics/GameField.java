@@ -1,8 +1,6 @@
 package graphics;
 
-import entites.Animal;
 import entites.Entity;
-import entites.EntityType;
 import field.Grid;
 
 import javax.swing.*;
@@ -28,18 +26,18 @@ public class GameField extends JPanel implements ActionListener {
 
     public void initGame(){
         grid = new Grid(WIDTH/DOT_SIZE - 1, HEIGHT/DOT_SIZE - 1);
-        timer = new Timer(500, this);
+        timer = new Timer(250, this);
+        timer.start();
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        java.util.List<Entity> entityList = new ArrayList<>();
+        grid.updateEntities();
         for(Entity[] entities : grid.getEntitiesGrid()){
             for(Entity entity : entities){
                 if(entity != null){
-                    g.drawImage(entity.image, entity.posX * DOT_SIZE, entity.posY*DOT_SIZE, this);
-                    entityList.add(entity);
+                    g.drawImage(entity.image, entity.flowPoint.x * DOT_SIZE, entity.flowPoint.y*DOT_SIZE, this);
                 }
             }
         }

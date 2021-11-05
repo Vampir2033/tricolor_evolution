@@ -4,25 +4,20 @@ import java.awt.*;
 
 public abstract class Entity {
     public EntityType entityType;
-    public int posX;
-    public int posY;
+    public Point flowPoint;
     public Image image;
-    public static Entity[][] entities;
+    public static Rectangle border;
 
-    public Entity(EntityType entityType, int posX, int posY, Image image) {
+
+    public Entity(EntityType entityType, Point flowPoint, Image image) {
         this.entityType = entityType;
-        this.posX = posX;
-        this.posY = posY;
+        this.flowPoint = flowPoint;
         this.image = image;
     }
 
-//    public Entity() {
-//        entityType = EntityType.VOID;
-//    }
-
-    public static void setEntities(Entity[][] entities) {
-        Entity.entities = entities;
+    public static void setBorder(Rectangle border) {
+        Entity.border = border;
     }
 
-    public abstract void update();
+    public abstract void update(int iteration);
 }
