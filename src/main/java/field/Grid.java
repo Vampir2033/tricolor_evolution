@@ -16,8 +16,7 @@ public class Grid {
     private int flowIteration = 0;
     private Entity[][] entitiesGrid;
     private final int plantGenPercent = 20;
-    private final int maxAmmPlantsGenOnce = 8;
-
+    private final int maxAmmPlantsGenOnce = 3;
 
     public Entity[][] getEntitiesGrid() {
         return entitiesGrid;
@@ -29,8 +28,8 @@ public class Grid {
         AMM_CELLS = sizeX * sizeY;
         entitiesGrid = new Entity[sizeY][sizeX];
         Entity.setBorder(border);
-        Animal.setEntities(entitiesGrid);
-        generateAnimals(20);
+        Entity.setEntities(entitiesGrid);
+        generateAnimals(40);
     }
 
     public void generateAnimals(int amm){
@@ -43,6 +42,7 @@ public class Grid {
                     Animal.sizeRange.getRandValue(),
                     Animal.speedRange.getRandValue(),
                     Animal.sensRange.getRandValue());
+            System.out.println(entitiesGrid[posY][posX]);
         }
     }
 

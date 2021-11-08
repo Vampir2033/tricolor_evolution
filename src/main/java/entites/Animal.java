@@ -1,5 +1,6 @@
 package entites;
 
+import utils.MyPoint;
 import utils.Range;
 
 import java.awt.*;
@@ -10,19 +11,23 @@ import java.util.Random;
 
 public class Animal extends Entity{
     private int flowIteration = 0;
-    public static Entity[][] entities;
     private Point destinationPoint;
 
     public static Range sizeRange  = new Range(1, 255);
-    public static Range speedRange  = new Range(0, 7);
+    public static Range speedRange  = new Range(0, 10);
     public static Range sensRange  = new Range(0, 10);
+    public static int maxSpeed = speedRange.minValue;
 
-    private int size;
-    private int speed;
-    private int sens;
+    private final int size;
+    private final int speed;
+    private final int sens;
 
-    public static void setEntities(Entity[][] entities) {
-        Animal.entities = entities;
+    class ScannedData{
+        public Plant nearestPlant;
+
+        public ScannedData() {
+            nearestPlant = null;
+        }
     }
 
     public Animal(Point flowPoint, int size, int speed, int sens) {
@@ -32,20 +37,36 @@ public class Animal extends Entity{
         this.sens = sens;
         setImage(generateImage(size, speed, sens));
         destinationPoint = (Point) flowPoint.clone();
+        maxSpeed = Math.max(speed + 1, maxSpeed);
     }
 
     @Override
     public void update(int iteration) {
         if(flowIteration == iteration)
             return;
+        if(speed == 0 || iteration % (maxSpeed - speed) != 0)
+            return;
+
+        ScannedData scannedData = new ScannedData();
+        scanLocal(scannedData);
+        destinationPoint = (scannedData.nearestPlant == null)? destinationPoint : scannedData.nearestPlant.flowPoint;
         if(destinationPoint.equals(flowPoint))
             setNewDestinationPoint();
+
+        Entity destinationEntity = entities[destinationPoint.y][destinationPoint.x];
+        if(destinationEntity != null && MyPoint.getDistance(flowPoint, destinationPoint) == 1){
+            if(destinationEntity.entityType == EntityType.PLANT) {
+                eatPlant((Plant) destinationEntity);
+            }
+        }
+
         Point newPosition = goOneStep();
         if(newPosition != null){
             entities[newPosition.y][newPosition.x] = this;
             entities[flowPoint.y][flowPoint.x] = null;
             flowPoint = newPosition;
-        } else {
+        }
+        else {
             setNewDestinationPoint();
         }
         flowIteration = iteration;
@@ -73,16 +94,58 @@ public class Animal extends Entity{
     static Image generateImage(int size, int speed, int sens){
         Range rgbRange = new Range(0, 255);
         Color color = new Color(
-                sizeRange.transformToRange(rgbRange, size),
                 speedRange.transformToRange(rgbRange, speed),
+                sizeRange.transformToRange(rgbRange, size),
                 sensRange.transformToRange(rgbRange, sens));
+        final int borderSize = 1;
         BufferedImage image = new BufferedImage(16, 16, BufferedImage.TYPE_3BYTE_BGR);
-        Random random = new Random();
         for(int i = 0; i < image.getHeight(); ++i){
             for(int j = 0; j < image.getWidth(); ++j){
-                image.setRGB(i, j, color.getRGB());
+                if(i < borderSize || j < borderSize || i >= 16 - borderSize || j >= 16 - borderSize)
+                    image.setRGB(i, j, Color.WHITE.getRGB());
+                else
+                    image.setRGB(i, j, color.getRGB());
             }
         }
         return image;
+    }
+
+    private void scanLocal(ScannedData scannedData){
+        Point startPoint = new Point(
+                Math.max(0, flowPoint.x - sens),
+                Math.max(0, flowPoint.y - sens)
+        );
+        Point endPoint = new Point(
+                Math.min(flowPoint.x + sens, border.width),
+                Math.min(flowPoint.y + sens, border.height)
+        );
+        for(int y = startPoint.y; y < endPoint.y; ++y){
+            for(int x = startPoint.x; x < endPoint.x; ++x){
+                if(entities[y][x] != null && entities[y][x].getEntityType() == EntityType.PLANT){
+                    if (scannedData.nearestPlant == null ||
+                        MyPoint.getDistance(flowPoint, entities[y][x].getFlowPoint()) <
+                                MyPoint.getDistance(flowPoint, scannedData.nearestPlant.getFlowPoint())){
+                        scannedData.nearestPlant = (Plant) entities[y][x];
+                    }
+                }
+            }
+        }
+    }
+
+    private void eatPlant(Plant plant){
+        entities[plant.flowPoint.y][plant.flowPoint.x] = null;
+    }
+
+    @Override
+    public String toString() {
+        return "Animal{" +
+                "flowIteration=" + flowIteration +
+                ", destinationPoint=" + destinationPoint +
+                ", size=" + size +
+                ", speed=" + speed +
+                ", sens=" + sens +
+                ", entityType=" + entityType +
+                ", flowPoint=" + flowPoint +
+                '}';
     }
 }

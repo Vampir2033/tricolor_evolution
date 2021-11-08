@@ -1,5 +1,6 @@
 package graphics;
 
+import entites.Animal;
 import entites.Entity;
 import field.Grid;
 
@@ -8,6 +9,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class GameField extends JPanel implements ActionListener {
     private final int WIDTH;
@@ -37,7 +39,10 @@ public class GameField extends JPanel implements ActionListener {
         for(Entity[] entities : grid.getEntitiesGrid()){
             for(Entity entity : entities){
                 if(entity != null){
-                    g.drawImage(entity.image, entity.flowPoint.x * DOT_SIZE, entity.flowPoint.y*DOT_SIZE, this);
+                    g.drawImage(entity.getImage(),
+                            entity.getFlowPoint().x * DOT_SIZE,
+                            entity.getFlowPoint().y*DOT_SIZE,
+                            this);
                 }
             }
         }
