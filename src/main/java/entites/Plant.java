@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 
 public class Plant extends Entity{
     private static final Image plantImage;
+    private int foodValue;
 
     static {
         plantImage = generatePlantImage();
@@ -28,6 +29,14 @@ public class Plant extends Entity{
     public Plant(Point flowPoint) {
         super(EntityType.PLANT, flowPoint);
         setImage(plantImage);
+        foodValue = 1000;
+    }
+
+    public int eatPlant(int needEnergy){
+        foodValue -= needEnergy;
+        if(foodValue <= 0)
+            alive = false;
+        return (isAlive())? needEnergy : needEnergy + foodValue;
     }
 
 }

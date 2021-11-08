@@ -14,18 +14,22 @@ public class Animal extends Entity{
     private Point destinationPoint;
 
     public static Range sizeRange  = new Range(1, 255);
-    public static Range speedRange  = new Range(1, 10);
-    public static Range sensRange  = new Range(0, 10);
+    public static Range speedRange  = new Range(1,20);
+    public static Range sensRange  = new Range(0, 20);
     public static int maxSpeed = speedRange.minValue;
 
     private final int size;
     private final int speed;
     private final int sens;
 
-
     private final int maxEnergy;
     private int flowEnergy;
+    private final int idlingEnergy;
     private final int stepEnergy;
+
+    private static final float reproductionEnergyPercent = 0.8f;
+    private static final int mutationPercent = 10;
+    private static final float mutationRangePercent = 0.1f;
 
     static class ScannedData{
         public Plant nearestPlant;
@@ -37,15 +41,17 @@ public class Animal extends Entity{
 
     public Animal(Point flowPoint, int size, int speed, int sens) {
         super(EntityType.ANIMAL, flowPoint);
-        this.size = size;
-        this.speed = speed;
-        this.sens = sens;
+        this.size = sizeRange.inRange(size);
+        this.speed = speedRange.inRange(speed);
+        this.sens = sensRange.inRange(sens);
+
         setImage(generateImage(size, speed, sens));
         destinationPoint = (Point) flowPoint.clone();
         maxSpeed = Math.max(speed + 1, maxSpeed);
-        maxEnergy = 100;
-        flowEnergy = maxEnergy;
-        stepEnergy = 2;
+        maxEnergy = size * 100;
+        flowEnergy = maxEnergy / 2;
+        idlingEnergy = (size*maxSpeed/5 + sens) / 20;
+        stepEnergy = (size*maxSpeed + sens * 4) / 20;
     }
 
     @Override
@@ -54,7 +60,9 @@ public class Animal extends Entity{
             return;
         if(iteration % (maxSpeed - speed) != 0)
             return;
-
+        if(tryReproduct(iteration) != null){
+            return;
+        }
         ScannedData scannedData = new ScannedData();
         scanLocal(scannedData);
         destinationPoint = (scannedData.nearestPlant == null)? destinationPoint : scannedData.nearestPlant.flowPoint;
@@ -63,14 +71,11 @@ public class Animal extends Entity{
 
         Point newPosition = goOneStep();
         if(newPosition == null) {
+            setFlowEnergy(flowEnergy - idlingEnergy);
             return;
         }
-        if(!newPosition.equals(flowPoint))
-            flowEnergy -= stepEnergy;
-        if(flowEnergy <= 0){
-            alive = false;
+        if(!newPosition.equals(flowPoint) && !setFlowEnergy(flowEnergy - stepEnergy))
             return;
-        }
 
         Entity destinationEntity = entities[newPosition.y][newPosition.x];
         if(destinationEntity != null && destinationEntity.entityType == EntityType.PLANT) {
@@ -107,22 +112,27 @@ public class Animal extends Entity{
     }
 
     static Image generateImage(int size, int speed, int sens){
-        Range rgbRange = new Range(0, 255);
-        Color color = new Color(
-                speedRange.transformToRange(rgbRange, speed),
-                sizeRange.transformToRange(rgbRange, size),
-                sensRange.transformToRange(rgbRange, sens));
-        final int borderSize = 1;
-        BufferedImage image = new BufferedImage(16, 16, BufferedImage.TYPE_3BYTE_BGR);
-        for(int i = 0; i < image.getHeight(); ++i){
-            for(int j = 0; j < image.getWidth(); ++j){
-                if(i < borderSize || j < borderSize || i >= 16 - borderSize || j >= 16 - borderSize)
-                    image.setRGB(i, j, Color.WHITE.getRGB());
-                else
-                    image.setRGB(i, j, color.getRGB());
+        try {
+            Range rgbRange = new Range(0, 255);
+            Color color = new Color(
+                    speedRange.transformToRange(rgbRange, speed),
+                    sizeRange.transformToRange(rgbRange, size),
+                    sensRange.transformToRange(rgbRange, sens));
+            final int borderSize = 1;
+            BufferedImage image = new BufferedImage(16, 16, BufferedImage.TYPE_3BYTE_BGR);
+            for (int i = 0; i < image.getHeight(); ++i) {
+                for (int j = 0; j < image.getWidth(); ++j) {
+                    if (i < borderSize || j < borderSize || i >= 16 - borderSize || j >= 16 - borderSize)
+                        image.setRGB(i, j, Color.WHITE.getRGB());
+                    else
+                        image.setRGB(i, j, color.getRGB());
+                }
             }
+            return image;
+        } catch (Exception e){
+            return new BufferedImage(16, 16, BufferedImage.TYPE_3BYTE_BGR);
+
         }
-        return image;
     }
 
     private void scanLocal(ScannedData scannedData){
@@ -148,20 +158,94 @@ public class Animal extends Entity{
     }
 
     private void eatPlant(Plant plant){
-        entities[plant.flowPoint.y][plant.flowPoint.x] = null;
-        flowEnergy = maxEnergy;
+        flowEnergy += plant.eatPlant(maxEnergy - flowEnergy);
+        if(!plant.isAlive())
+            entities[plant.flowPoint.y][plant.flowPoint.x] = null;
+    }
+
+    public boolean setFlowEnergy(int flowEnergy) {
+        this.flowEnergy = flowEnergy;
+        if(flowEnergy <= 0) {
+            alive = false;
+            flowEnergy = 0;
+            return false;
+        } else if(flowEnergy > maxEnergy){
+            flowEnergy = maxEnergy;
+        }
+        return true;
     }
 
     @Override
     public String toString() {
         return "Animal{" +
-                "flowIteration=" + flowIteration +
-                ", destinationPoint=" + destinationPoint +
-                ", size=" + size +
+                "size=" + size +
                 ", speed=" + speed +
                 ", sens=" + sens +
+                ", maxEnergy=" + maxEnergy +
+                ", flowEnergy=" + flowEnergy +
+                ", idlingEnergy=" + idlingEnergy +
+                ", stepEnergy=" + stepEnergy +
                 ", entityType=" + entityType +
-                ", flowPoint=" + flowPoint +
                 '}';
     }
+
+    public int getSpeed() {
+        return speed;
+    }
+
+    public static void setMaxSpeed(int maxSpeed) {
+        Animal.maxSpeed = maxSpeed;
+    }
+
+    private Animal tryReproduct(int flowIteration){
+        if(flowEnergy >= maxEnergy * reproductionEnergyPercent){
+            Point point = findClearNeighborCell();
+            if(point == null){
+                return null;
+            }
+
+            Animal child = new Animal(
+                    point,
+                    size + addMutation(sizeRange.maxValue),
+                    speed + addMutation(speedRange.maxValue),
+                    sens + addMutation(sensRange.maxValue)
+            );
+            child.flowIteration = flowIteration;
+            setFlowEnergy(flowEnergy - child.flowEnergy);
+            entities[child.flowPoint.y][child.flowPoint.x] = child;
+            return child;
+        } else {
+            return null;
+        }
+    }
+
+    private int addMutation(int maxValue){
+        Random random = new Random();
+        if(random.nextInt(100) >= mutationPercent){
+            return 0;
+        } else {
+            return (random.nextInt((int) (maxValue * mutationRangePercent)) + 1) *
+                    (-1 * random.nextInt(2));
+        }
+
+    }
+
+    private Point findClearNeighborCell(){
+        for(int y = -1; y <= 1; ++y){
+            for(int x = -1; x <= 1; ++x){
+                if(Math.abs(y) == Math.abs(x)){
+                    continue;
+                }
+                Point point = new Point(flowPoint.x + x, flowPoint.y + y);
+                if(!border.contains(point)){
+                    continue;
+                }
+                if (entities[point.y][point.x] == null){
+                    return point;
+                }
+            }
+        }
+        return null;
+    }
 }
+

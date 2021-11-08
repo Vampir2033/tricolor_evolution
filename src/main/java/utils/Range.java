@@ -12,6 +12,9 @@ public class Range {
     }
 
     public int inRange(int value){
+        if(value < 0){
+            System.out.println(value);
+        }
         if(value < minValue)
             return minValue;
         else if(value > maxValue)

@@ -15,7 +15,7 @@ public class Grid {
     static Random random = new Random();
     private int flowIteration = 0;
     private Entity[][] entitiesGrid;
-    private final int plantGenPercent = 20;
+    private final int plantGenPercent = 15;
     private final int maxAmmPlantsGenOnce = 3;
 
     public Entity[][] getEntitiesGrid() {
@@ -29,7 +29,7 @@ public class Grid {
         entitiesGrid = new Entity[sizeY][sizeX];
         Entity.setBorder(border);
         Entity.setEntities(entitiesGrid);
-        generateAnimals(40);
+        generateAnimals(5);
     }
 
     public void generateAnimals(int amm){
@@ -62,6 +62,7 @@ public class Grid {
 
     public void updateEntities(){
         generatePlants();
+        int maxAnimalSpeed = 0;
         for(Entity[] entities : entitiesGrid){
             for(Entity entity : entities){
                 if(entity == null)
@@ -70,8 +71,12 @@ public class Grid {
                 if(!entity.isAlive()){
                     removeEntity(entity);
                 }
+                if(entity.getEntityType() == EntityType.ANIMAL){
+                    maxAnimalSpeed = Math.max(maxAnimalSpeed, ((Animal) entity).getSpeed()+1);
+                }
             }
         }
+        Animal.setMaxSpeed(maxAnimalSpeed);
         ++flowIteration;
     }
 
