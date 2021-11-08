@@ -6,6 +6,7 @@ public abstract class Entity {
     protected EntityType entityType;
     protected Point flowPoint;
     protected Image image;
+    protected boolean alive;
     protected static Rectangle border;
     protected static Entity[][] entities;
 
@@ -20,6 +21,7 @@ public abstract class Entity {
     public Entity(EntityType entityType, Point flowPoint) {
         this.entityType = entityType;
         this.flowPoint = flowPoint;
+        this.alive = true;
     }
 
     public EntityType getEntityType() {
@@ -28,10 +30,6 @@ public abstract class Entity {
 
     public Point getFlowPoint() {
         return flowPoint;
-    }
-
-    public void setFlowPoint(Point flowPoint) {
-        this.flowPoint = flowPoint;
     }
 
     public Image getImage() {
@@ -45,6 +43,11 @@ public abstract class Entity {
     public static void setBorder(Rectangle border) {
         Entity.border = border;
     }
+
+    public boolean isAlive() {
+        return alive;
+    }
+
 
     public void update(int iteration){
 

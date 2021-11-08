@@ -14,7 +14,7 @@ public class Animal extends Entity{
     private Point destinationPoint;
 
     public static Range sizeRange  = new Range(1, 255);
-    public static Range speedRange  = new Range(0, 10);
+    public static Range speedRange  = new Range(1, 10);
     public static Range sensRange  = new Range(0, 10);
     public static int maxSpeed = speedRange.minValue;
 
@@ -22,7 +22,12 @@ public class Animal extends Entity{
     private final int speed;
     private final int sens;
 
-    class ScannedData{
+
+    private final int maxEnergy;
+    private int flowEnergy;
+    private final int stepEnergy;
+
+    static class ScannedData{
         public Plant nearestPlant;
 
         public ScannedData() {
@@ -38,13 +43,16 @@ public class Animal extends Entity{
         setImage(generateImage(size, speed, sens));
         destinationPoint = (Point) flowPoint.clone();
         maxSpeed = Math.max(speed + 1, maxSpeed);
+        maxEnergy = 100;
+        flowEnergy = maxEnergy;
+        stepEnergy = 2;
     }
 
     @Override
     public void update(int iteration) {
         if(flowIteration == iteration)
             return;
-        if(speed == 0 || iteration % (maxSpeed - speed) != 0)
+        if(iteration % (maxSpeed - speed) != 0)
             return;
 
         ScannedData scannedData = new ScannedData();
@@ -53,22 +61,25 @@ public class Animal extends Entity{
         if(destinationPoint.equals(flowPoint))
             setNewDestinationPoint();
 
-        Entity destinationEntity = entities[destinationPoint.y][destinationPoint.x];
-        if(destinationEntity != null && MyPoint.getDistance(flowPoint, destinationPoint) == 1){
-            if(destinationEntity.entityType == EntityType.PLANT) {
-                eatPlant((Plant) destinationEntity);
-            }
+        Point newPosition = goOneStep();
+        if(newPosition == null) {
+            return;
+        }
+        if(!newPosition.equals(flowPoint))
+            flowEnergy -= stepEnergy;
+        if(flowEnergy <= 0){
+            alive = false;
+            return;
         }
 
-        Point newPosition = goOneStep();
-        if(newPosition != null){
-            entities[newPosition.y][newPosition.x] = this;
-            entities[flowPoint.y][flowPoint.x] = null;
-            flowPoint = newPosition;
+        Entity destinationEntity = entities[newPosition.y][newPosition.x];
+        if(destinationEntity != null && destinationEntity.entityType == EntityType.PLANT) {
+            eatPlant((Plant) destinationEntity);
         }
-        else {
-            setNewDestinationPoint();
-        }
+
+        entities[newPosition.y][newPosition.x] = this;
+        entities[flowPoint.y][flowPoint.x] = null;
+        flowPoint = newPosition;
         flowIteration = iteration;
     }
 
@@ -82,6 +93,10 @@ public class Animal extends Entity{
     }
 
     private Point goOneStep(){
+        if(MyPoint.getDistance(flowPoint, destinationPoint) == 1 &&
+                entities[destinationPoint.y][destinationPoint.x] != null &&
+                entities[destinationPoint.y][destinationPoint.x].entityType == EntityType.PLANT)
+            return destinationPoint;
         Point tmp = new Point(destinationPoint.x - flowPoint.x, destinationPoint.y - flowPoint.y);
         List<Point> availablePoints = new LinkedList<>();
         if(tmp.x != 0)
@@ -134,6 +149,7 @@ public class Animal extends Entity{
 
     private void eatPlant(Plant plant){
         entities[plant.flowPoint.y][plant.flowPoint.x] = null;
+        flowEnergy = maxEnergy;
     }
 
     @Override

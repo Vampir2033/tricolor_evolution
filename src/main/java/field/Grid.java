@@ -67,10 +67,16 @@ public class Grid {
                 if(entity == null)
                     continue;
                 entity.update(flowIteration);
+                if(!entity.isAlive()){
+                    removeEntity(entity);
+                }
             }
         }
         ++flowIteration;
     }
 
+    private void removeEntity(Entity entity){
+        entitiesGrid[entity.getFlowPoint().y][entity.getFlowPoint().x] = null;
+    }
 
 }
